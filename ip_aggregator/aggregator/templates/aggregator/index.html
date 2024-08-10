@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Address Aggregator</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-network-wired"></i> IP Address Aggregator</h1>
+        </header>
+        <main>
+            <form method="post" class="aggregator-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.ip_addresses.id_for_label }}">IP Address Ranges:</label>
+                    {{ form.ip_addresses }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.output_format.id_for_label }}">Output Format:</label>
+                    {{ form.output_format }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.why_blocked.id_for_label }}">WHY Blocked? (optional):</label>
+                    {{ form.why_blocked }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.asn_code.id_for_label }}">ASN Code (optional):</label>
+                    {{ form.asn_code }}
+                </div>
+                <button type="submit" class="submit-btn"><i class="fas fa-check-circle"></i> Aggregate</button>
+            </form>
+
+            {% if result %}
+            <div class="results">
+                <h2>Results:</h2>
+                <textarea id="result-text" rows="10" readonly>{{ result }}</textarea>
+                <button id="copy-btn" class="copy-btn"><i class="fas fa-copy"></i> Copy to Clipboard</button>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+    <script>
+        document.getElementById('copy-btn')?.addEventListener('click', function () {
+            var resultText = document.getElementById('result-text');
+            resultText.select();
+            document.execCommand('copy');
+            alert('Copied to clipboard!');
+        });
+    </script>
+</body>
+
+</html>

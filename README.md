@@ -11,7 +11,7 @@ IP Aggregator is a powerful Python utility built with Django, designed to stream
 - Built-in input cleaning and validation.
 - Efficient network collapsing for optimal aggregation.
 
-## Deployment Guide
+## Deployment Guide(Ubuntu 22.04)
 
 Follow these steps to deploy the IP Aggregator project on a new Ubuntu server:
 

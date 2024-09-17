@@ -11,13 +11,13 @@ IP Aggregator is a powerful Python utility built with Django, designed to stream
 - Built-in input cleaning and validation.
 - Efficient network collapsing for optimal aggregation.
 
-## Deployment Guide(Ubuntu 22.04)
+## Deployment Guide(Ubuntu)
 
 Follow these steps to deploy the IP Aggregator project on a new Ubuntu server:
 
 ### 1. Initial Server Setup
 
-1. Set up a new Ubuntu server (22.04 or later).
+1. Set up a  Ubuntu server.
 2. Create a non-root user with sudo privileges.
 3. Set up a firewall (UFW).
 
@@ -28,25 +28,7 @@ sudo apt update
 sudo apt install python3-venv python3-dev libpq-dev postgresql postgresql-contrib nginx curl
 ```
 
-### 3. Create PostgreSQL Database and User
-
-```bash
-sudo -u postgres psql
-```
-
-In the PostgreSQL prompt:
-
-```sql
-CREATE DATABASE ip_aggregator;
-CREATE USER ip_aggregator_user WITH PASSWORD 'your_secure_password';
-ALTER ROLE ip_aggregator_user SET client_encoding TO 'utf8';
-ALTER ROLE ip_aggregator_user SET default_transaction_isolation TO 'read committed';
-ALTER ROLE ip_aggregator_user SET timezone TO 'UTC';
-GRANT ALL PRIVILEGES ON DATABASE ip_aggregator TO ip_aggregator_user;
-\q
-```
-
-### 4. Create Project Directory and Virtual Environment
+### 3. Create Project Directory and Virtual Environment
 
 ```bash
 mkdir ~/ip_aggregator
@@ -55,41 +37,31 @@ python3 -m venv env
 source env/bin/activate
 ```
 
-### 5. Install Django and Other Requirements
+### 4. Install Django and Other Requirements
 
 ```bash
-pip install django gunicorn psycopg2-binary
+pip install django gunicorn psycopg2-binary pillow
 ```
 
-### 6. Clone the Project from GitHub
+### 5. Clone the Project from GitHub
 
 ```bash
 git clone https://github.com/your_username/IP_Aggregator.git .
 ```
 
-### 7. Configure Django Settings
+### 6. Configure Django Settings
 
 Edit `~/ip_aggregator/myproject/settings.py`:
 
 ```python
 ALLOWED_HOSTS = ['your_server_ip_or_domain', 'localhost']
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'ip_aggregator',
-        'USER': 'ip_aggregator_user',
-        'PASSWORD': 'your_secure_password',
-        'HOST': 'localhost',
-        'PORT': '',
-    }
-}
-
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+STATICFILES_DIRS = [ os.path.join(BASE_DIR,'static') ]
 ```
 
-### 8. Set Up Django Project
+### 7. Set Up Django Project
 
 ```bash
 python manage.py makemigrations
@@ -98,13 +70,13 @@ python manage.py createsuperuser
 python manage.py collectstatic
 ```
 
-### 9. Test Gunicorn
+### 8. Test Gunicorn
 
 ```bash
 gunicorn --bind 0.0.0.0:8000 myproject.wsgi
 ```
 
-### 10. Create Gunicorn Systemd Socket and Service Files
+### 9. Create Gunicorn Systemd Socket and Service Files
 
 Create and edit `/etc/systemd/system/gunicorn.socket`:
 
@@ -141,14 +113,14 @@ ExecStart=/home/your_username/ip_aggregator/env/bin/gunicorn \
 WantedBy=multi-user.target
 ```
 
-### 11. Start and Enable Gunicorn Socket
+### 10. Start and Enable Gunicorn Socket
 
 ```bash
 sudo systemctl start gunicorn.socket
 sudo systemctl enable gunicorn.socket
 ```
 
-### 12. Configure Nginx
+### 11. Configure Nginx
 
 Create and edit `/etc/nginx/sites-available/ip_aggregator`:
 
@@ -177,7 +149,7 @@ sudo nginx -t
 sudo systemctl restart nginx
 ```
 
-### 13. Configure Firewall
+### 12. Configure Firewall
 
 ```bash
 sudo ufw allow 'Nginx Full'

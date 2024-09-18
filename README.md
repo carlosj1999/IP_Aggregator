@@ -17,9 +17,8 @@ Follow these steps to deploy the IP Aggregator project on a new Ubuntu server:
 
 ### 1. Initial Server Setup
 
-1. Set up a  Ubuntu server.
-2. Create a non-root user with sudo privileges.
-3. Set up a firewall (UFW).
+1. Set up an Ubuntu server.
+2. Create a root user with sudo privileges.
 
 ### 2. Install Required Packages
 

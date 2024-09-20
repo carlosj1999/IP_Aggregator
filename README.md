@@ -18,20 +18,19 @@ Follow these steps to deploy the IP Aggregator project on a new Ubuntu server:
 ### 1. Initial Server Setup
 
 1. Set up an Ubuntu server.
-2. Create a root user with sudo privileges.
+2. Create a root user.
 
 ### 2. Install Required Packages
 
 ```bash
 sudo apt update
-sudo apt install python3-venv python3-dev libpq-dev postgresql postgresql-contrib nginx curl
+sudo apt install python3-venv python3-dev nginx curl pip
+sudo pip3 install virtualenv
 ```
 
-### 3. Create Project Directory and Virtual Environment
+### 3. Create  Virtual Environment
 
 ```bash
-mkdir ~/ip_aggregator
-cd ~/ip_aggregator
 python3 -m venv env
 source env/bin/activate
 ```
@@ -39,45 +38,46 @@ source env/bin/activate
 ### 4. Install Django and Other Requirements
 
 ```bash
-pip install django gunicorn psycopg2-binary pillow
+pip install django gunicorn pillow
 ```
 
 ### 5. Clone the Project from GitHub
 
 ```bash
-git clone https://github.com/your_username/IP_Aggregator.git .
+git clone https://github.com/carlosj1999/IP_Aggregator.git
 ```
 
 ### 6. Configure Django Settings
 
-Edit `~/ip_aggregator/myproject/settings.py`:
+nano ip_aggregator/ip_aggregator/settings.py:
 
 ```python
 ALLOWED_HOSTS = ['your_server_ip_or_domain', 'localhost']
-
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
-STATICFILES_DIRS = [ os.path.join(BASE_DIR,'static') ]
 ```
 
 ### 7. Set Up Django Project
 
 ```bash
-python manage.py makemigrations
-python manage.py migrate
-python manage.py createsuperuser
 python manage.py collectstatic
 ```
 
 ### 8. Test Gunicorn
 
 ```bash
-gunicorn --bind 0.0.0.0:8000 myproject.wsgi
+gunicorn --bind 0.0.0.0:8000 ip_aggregator.wsgi
+```
+If everything is correct:
+```bash
+deactivate
 ```
 
 ### 9. Create Gunicorn Systemd Socket and Service Files
 
 Create and edit `/etc/systemd/system/gunicorn.socket`:
+
+```bash
+nano /etc/systemd/system/gunicorn.socket
+```
 
 ```ini
 [Unit]
@@ -92,6 +92,9 @@ WantedBy=sockets.target
 
 Create and edit `/etc/systemd/system/gunicorn.service`:
 
+```bash
+nano /etc/systemd/system/gunicorn.service
+```
 ```ini
 [Unit]
 Description=gunicorn daemon
@@ -101,12 +104,12 @@ After=network.target
 [Service]
 User=your_username
 Group=www-data
-WorkingDirectory=/home/your_username/ip_aggregator
-ExecStart=/home/your_username/ip_aggregator/env/bin/gunicorn \
+WorkingDirectory=/home/your_username/IP_Agregator/ip_aggregator
+ExecStart=/home/your_username/env/bin/gunicorn \
           --access-logfile - \
           --workers 3 \
           --bind unix:/run/gunicorn.sock \
-          myproject.wsgi:application
+          ip_aggregator.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
@@ -118,11 +121,31 @@ WantedBy=multi-user.target
 sudo systemctl start gunicorn.socket
 sudo systemctl enable gunicorn.socket
 ```
+Check the status of the process to find out whether it was able to start:
+```bash
+systemctl status gunicorn.socket
+```
+### 10.1. Testing Socket Activation
+Currently, if you’ve only started the gunicorn.socket unit, the gunicorn.service will not be active yet since the socket has not yet received any connections. You can check this by typing:
+```bash
+systemctl status gunicorn
+```
+To test the socket activation mechanism, you can send a connection to the socket through curl by typing:
+```bash
+curl --unix-socket /run/gunicorn.sock localhost
+```
+You should receive the HTML output from your application in the terminal. This indicates that Gunicorn was started and was able to serve your Django application. You can verify that the Gunicorn service is running by typing:
+```bash
+systemctl status gunicorn
+```
 
 ### 11. Configure Nginx
 
 Create and edit `/etc/nginx/sites-available/ip_aggregator`:
 
+```bash
+nano /etc/nginx/sites-available/ip_aggregator
+```
 ```nginx
 server {
     listen 80;
@@ -130,7 +153,7 @@ server {
 
     location = /favicon.ico { access_log off; log_not_found off; }
     location /static/ {
-        root /home/your_username/ip_aggregator;
+        root /home/your_username/IP_Aggregator/ip_aggregator;
     }
 
     location / {
@@ -141,17 +164,54 @@ server {
 ```
 
 Enable the Nginx configuration:
-
 ```bash
-sudo ln -s /etc/nginx/sites-available/ip_aggregator /etc/nginx/sites-enabled
-sudo nginx -t
-sudo systemctl restart nginx
+ln -s /etc/nginx/sites-available/ip_aggregator /etc/nginx/sites-enabled
+```
+Test your Nginx configuration for syntax errors by typing:
+```bash
+nginx -t
+```
+```bash
+systemctl restart nginx
+```
+Finally, you need to open up your firewall to normal traffic on port 80
+```bash
+ufw allow 'Nginx Full'
 ```
 
-### 12. Configure Firewall
+## Troubleshooting
+For additional troubleshooting, the logs can help narrow down root causes. Check each of them in turn and look for messages indicating problem areas.
 
+The following logs may be helpful:
+
+Check the Nginx process logs by typing:```bash journalctl -u nginx```
+
+Check the Nginx access logs by typing:```bash less /var/log/nginx/access.log```
+
+Check the Nginx error logs by typing:```bash less /var/log/nginx/error.log```
+
+Check the Gunicorn application logs by typing:```bash journalctl -u gunicorn```
+
+Check the Gunicorn socket logs by typing:```bash journalctl -u gunicorn.socket```
+
+#### Nginx
+
+The primary place to look for more information is in Nginx’s error logs. Generally, this will tell you what conditions caused problems during the proxying event. Follow the Nginx error logs by typing:
 ```bash
-sudo ufw allow 'Nginx Full'
+tail -F /var/log/nginx/error.log
+```
+For (13: Permission denied), "GET /static/css/style.css HTTP/1.1":
+```bash
+chmod o+rx /home/your_username
+```
+```bash
+chmod o+rx /home/your_username/IP_Aggregator/ip_aggregator
+```
+```bash
+chmod -R o+rx /home/your_username/IP_Aggregator/ip_aggregator/static
+```
+```bash
+sudo chown -R www-data:www-data /home/your_username/IP_Aggregator/ip_aggregator/static
 ```
 
 ## Usage

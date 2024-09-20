@@ -18,14 +18,13 @@ Follow these steps to deploy the IP Aggregator project on a new Ubuntu server:
 ### 1. Initial Server Setup
 
 1. Set up an Ubuntu server.
-2. Create a root user.
+2. Create a user with sudo privilege.
 
 ### 2. Install Required Packages
 
 ```bash
-sudo apt update
-sudo apt install python3-venv python3-dev nginx curl pip
-sudo pip3 install virtualenv
+apt update
+apt install python3-venv python3-dev nginx curl pip
 ```
 
 ### 3. Create  Virtual Environment
@@ -194,13 +193,14 @@ Check the Gunicorn application logs by typing:```bash journalctl -u gunicorn```
 
 Check the Gunicorn socket logs by typing:```bash journalctl -u gunicorn.socket```
 
-#### Nginx
+#### Nginx Permission Denied Errors:
 
 The primary place to look for more information is in Nginx’s error logs. Generally, this will tell you what conditions caused problems during the proxying event. Follow the Nginx error logs by typing:
 ```bash
 tail -F /var/log/nginx/error.log
 ```
-For (13: Permission denied), "GET /static/css/style.css HTTP/1.1":
+##### For (13: Permission denied), "GET /static/css/style.css HTTP/1.1":
+Ensure that Nginx and Gunicorn have the necessary permissions to access your project files. Adjust permissions cautiously:
 ```bash
 chmod o+rx /home/your_username
 ```

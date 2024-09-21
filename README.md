@@ -18,7 +18,34 @@ Follow these steps to deploy the IP Aggregator project on a new Ubuntu server:
 ### 1. Initial Server Setup
 
 1. Set up an Ubuntu server.
-2. Create a user with sudo privilege.
+2. Once the server is deployed, you’ll need to login via SSH:
+    1. Open a terminal on your local machine.
+    2. Login using the IP address of the server:
+    ```bash
+    ssh username@your_server_ip
+    ```
+    •  If you’re using an SSH key:
+    ```bash
+    ssh -i /path/to/your/private_key username@your_server_ip
+    ```
+    •  If it’s your first login and no SSH key is set up, you may need the password you         provided during server creation.
+
+3. Create a New User with Sudo Privileges:
+   After logging in as root or an existing user, it’s recommended to create a new user with sudo privileges for security reasons.
+   1. Add new user:
+     ```bash
+     adduser new_username
+     ```
+     Follow the prompts to set the user password and information.
+   
+   2. Grant the new user sudo privileges:
+      ```bash
+      usermod -aG sudo new_username
+      ```
+   3. Switch to the new user:
+      ```bash
+      su - new_username
+      ```
 
 ### 2. Install Required Packages
 
@@ -48,7 +75,10 @@ git clone https://github.com/carlosj1999/IP_Aggregator.git
 
 ### 6. Configure Django Settings
 
-nano ip_aggregator/ip_aggregator/settings.py:
+Replace 'your_server_ip_or_domain' with your actual server IP or domain
+``` bash
+sed -i "s/^ALLOWED_HOSTS = .*/ALLOWED_HOSTS = ['your_server_ip_or_domain', 'localhost']/" /home/your_username/IP_Agregator/ip_aggregator/settings.py
+```
 
 ```python
 ALLOWED_HOSTS = ['your_server_ip_or_domain', 'localhost']
@@ -75,10 +105,7 @@ deactivate
 Create and edit `/etc/systemd/system/gunicorn.socket`:
 
 ```bash
-nano /etc/systemd/system/gunicorn.socket
-```
-
-```ini
+cat <<EOF | sudo tee /etc/systemd/system/gunicorn.socket
 [Unit]
 Description=gunicorn socket
 
@@ -87,14 +114,13 @@ ListenStream=/run/gunicorn.sock
 
 [Install]
 WantedBy=sockets.target
+EOF
 ```
 
 Create and edit `/etc/systemd/system/gunicorn.service`:
 
 ```bash
-nano /etc/systemd/system/gunicorn.service
-```
-```ini
+cat <<EOF | sudo tee /etc/systemd/system/gunicorn.service
 [Unit]
 Description=gunicorn daemon
 Requires=gunicorn.socket
@@ -104,15 +130,20 @@ After=network.target
 User=your_username
 Group=www-data
 WorkingDirectory=/home/your_username/IP_Agregator/ip_aggregator
-ExecStart=/home/your_username/env/bin/gunicorn \
-          --access-logfile - \
-          --workers 3 \
-          --bind unix:/run/gunicorn.sock \
+ExecStart=/home/your_username/env/bin/gunicorn \\
+          --access-logfile - \\
+          --workers 3 \\
+          --bind unix:/run/gunicorn.sock \\
           ip_aggregator.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
+EOF
 ```
+
+Notes:
+1. Replace your_username with the actual username you’re using on the server.
+2. Make sure the paths in WorkingDirectory and ExecStart are correct according to your setup.
 
 ### 10. Start and Enable Gunicorn Socket
 
@@ -143,14 +174,13 @@ systemctl status gunicorn
 Create and edit `/etc/nginx/sites-available/ip_aggregator`:
 
 ```bash
-nano /etc/nginx/sites-available/ip_aggregator
-```
-```nginx
+cat <<EOF | sudo tee /etc/nginx/sites-available/ip_aggregator
 server {
     listen 80;
     server_name your_server_ip_or_domain;
 
     location = /favicon.ico { access_log off; log_not_found off; }
+    
     location /static/ {
         root /home/your_username/IP_Aggregator/ip_aggregator;
     }
@@ -160,7 +190,11 @@ server {
         proxy_pass http://unix:/run/gunicorn.sock;
     }
 }
+EOF
 ```
+
+Notes:
+1. Make sure the paths in location /static/ and server_name are correct according to your setup.
 
 Enable the Nginx configuration:
 ```bash
@@ -183,15 +217,15 @@ For additional troubleshooting, the logs can help narrow down root causes. Check
 
 The following logs may be helpful:
 
-Check the Nginx process logs by typing:```bash journalctl -u nginx```
+Check the Nginx process logs by typing:` journalctl -u nginx`
 
-Check the Nginx access logs by typing:```bash less /var/log/nginx/access.log```
+Check the Nginx access logs by typing:` less /var/log/nginx/access.log`
 
-Check the Nginx error logs by typing:```bash less /var/log/nginx/error.log```
+Check the Nginx error logs by typing:` less /var/log/nginx/error.log`
 
-Check the Gunicorn application logs by typing:```bash journalctl -u gunicorn```
+Check the Gunicorn application logs by typing:` journalctl -u gunicorn`
 
-Check the Gunicorn socket logs by typing:```bash journalctl -u gunicorn.socket```
+Check the Gunicorn socket logs by typing:` journalctl -u gunicorn.socket`
 
 #### Nginx Permission Denied Errors:
 

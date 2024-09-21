@@ -77,7 +77,7 @@ git clone https://github.com/carlosj1999/IP_Aggregator.git
 
 Replace 'your_server_ip_or_domain' with your actual server IP or domain
 ``` bash
-sed -i "s/^ALLOWED_HOSTS = .*/ALLOWED_HOSTS = ['your_server_ip_or_domain', 'localhost']/" /home/your_username/IP_Agregator/ip_aggregator/settings.py
+sed -i "s/^ALLOWED_HOSTS = .*/ALLOWED_HOSTS = ['your_server_ip_or_domain', 'localhost']/" /your_username/IP_Agregator/ip_aggregator/settings.py
 ```
 
 ```python
@@ -129,8 +129,8 @@ After=network.target
 [Service]
 User=your_username
 Group=www-data
-WorkingDirectory=/home/your_username/IP_Agregator/ip_aggregator
-ExecStart=/home/your_username/env/bin/gunicorn \\
+WorkingDirectory=/your_username/IP_Agregator/ip_aggregator
+ExecStart=/your_username/env/bin/gunicorn \\
           --access-logfile - \\
           --workers 3 \\
           --bind unix:/run/gunicorn.sock \\
@@ -182,7 +182,7 @@ server {
     location = /favicon.ico { access_log off; log_not_found off; }
     
     location /static/ {
-        root /home/your_username/IP_Aggregator/ip_aggregator;
+        root /your_username/IP_Aggregator/ip_aggregator;
     }
 
     location / {
@@ -236,16 +236,16 @@ tail -F /var/log/nginx/error.log
 ##### For (13: Permission denied), "GET /static/css/style.css HTTP/1.1":
 Ensure that Nginx and Gunicorn have the necessary permissions to access your project files. Adjust permissions cautiously:
 ```bash
-chmod o+rx /home/your_username
+chmod o+rx /your_username
 ```
 ```bash
-chmod o+rx /home/your_username/IP_Aggregator/ip_aggregator
+chmod o+rx /your_username/IP_Aggregator/ip_aggregator
 ```
 ```bash
-chmod -R o+rx /home/your_username/IP_Aggregator/ip_aggregator/static
+chmod -R o+rx /your_username/IP_Aggregator/ip_aggregator/static
 ```
 ```bash
-sudo chown -R www-data:www-data /home/your_username/IP_Aggregator/ip_aggregator/static
+sudo chown -R www-data:www-data /your_username/IP_Aggregator/ip_aggregator/static
 ```
 
 ## Usage

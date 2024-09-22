@@ -15,42 +15,16 @@ IP Aggregator is a powerful Python utility built with Django, designed to stream
 
 Follow these steps to deploy the IP Aggregator project on a new Ubuntu server:
 
-### 1. Initial Server Setup
+### 1. Prerequisites
 
-1. Set up an Ubuntu server.
-2. Once the server is deployed, you’ll need to login via SSH:
-    1. Open a terminal on your local machine.
-    2. Login using the IP address of the server:
-    ```bash
-    ssh username@your_server_ip
-    ```
-    •  If you’re using an SSH key:
-    ```bash
-    ssh -i /path/to/your/private_key username@your_server_ip
-    ```
-    •  If it’s your first login and no SSH key is set up, you may need the password you         provided during server creation.
+In order to complete this guide, you need a server running Ubuntu, along with a non-root user with sudo privileges and an active firewall.
 
-3. Create a New User with Sudo Privileges:
-   After logging in as root or an existing user, it’s recommended to create a new user with sudo privileges for security reasons.
-   1. Add new user:
-     ```bash
-     adduser new_username
-     ```
-     Follow the prompts to set the user password and information.
-   
-   2. Grant the new user sudo privileges:
-      ```bash
-      usermod -aG sudo new_username
-      ```
-   3. Switch to the new user:
-      ```bash
-      su - new_username
-      ```
-
-### 2. Install Required Packages
+### 2. Install Required Packages from the Ubuntu Repositories
 
 ```bash
 apt update
+```
+```bash
 apt install python3-venv python3-dev nginx curl pip
 ```
 
@@ -58,6 +32,8 @@ apt install python3-venv python3-dev nginx curl pip
 
 ```bash
 python3 -m venv env
+```
+```bash
 source env/bin/activate
 ```
 
@@ -70,19 +46,26 @@ pip install django gunicorn pillow
 ### 5. Clone the Project from GitHub
 
 ```bash
-git clone https://github.com/carlosj1999/IP_Aggregator.git
+git clone https://github.com/carlosj1999/ip_aggregator.git
 ```
 
 ### 6. Configure Django Settings
 
 Replace 'your_server_ip_or_domain' with your actual server IP or domain
 ``` bash
-sed -i "s/^ALLOWED_HOSTS = .*/ALLOWED_HOSTS = ['your_server_ip_or_domain', 'localhost']/" /your_username/IP_Agregator/ip_aggregator/settings.py
+vim /ip_aggregator/settings.py
 ```
+
+The simplest case: just add the domain name(s) and IP addresses of your Django server:
+`ALLOWED_HOSTS = [ 'example.com', '203.0.113.5']`
+
+To respond to 'example.com' and any subdomains, start the domain with a dot:
+`ALLOWED_HOSTS = ['.example.com', '203.0.113.5']`
 
 ```python
 ALLOWED_HOSTS = ['your_server_ip_or_domain', 'localhost']
 ```
+Note: Be sure to include `localhost` as one of the options since you will be proxying connections through a local Nginx instance.
 
 ### 7. Set Up Django Project
 
@@ -129,8 +112,8 @@ After=network.target
 [Service]
 User=your_username
 Group=www-data
-WorkingDirectory=/your_username/IP_Agregator/ip_aggregator
-ExecStart=/your_username/env/bin/gunicorn \\
+WorkingDirectory=/path_to_projectdir/ip_aggregator
+ExecStart=/path_to_venv/env/bin/gunicorn \\
           --access-logfile - \\
           --workers 3 \\
           --bind unix:/run/gunicorn.sock \\
@@ -149,6 +132,8 @@ Notes:
 
 ```bash
 sudo systemctl start gunicorn.socket
+```
+```bash
 sudo systemctl enable gunicorn.socket
 ```
 Check the status of the process to find out whether it was able to start:
@@ -182,7 +167,7 @@ server {
     location = /favicon.ico { access_log off; log_not_found off; }
     
     location /static/ {
-        root /your_username/IP_Aggregator/ip_aggregator;
+        root /path_to_projectdir/ip_aggregator;
     }
 
     location / {
@@ -194,7 +179,7 @@ EOF
 ```
 
 Notes:
-1. Make sure the paths in location /static/ and server_name are correct according to your setup.
+1. Make sure the paths in `location /static/` and `server_name` are correct according to your setup.
 
 Enable the Nginx configuration:
 ```bash
@@ -239,13 +224,13 @@ Ensure that Nginx and Gunicorn have the necessary permissions to access your pro
 chmod o+rx /your_username
 ```
 ```bash
-chmod o+rx /your_username/IP_Aggregator/ip_aggregator
+chmod o+rx /path_to_projectdir/ip_aggregator
 ```
 ```bash
-chmod -R o+rx /your_username/IP_Aggregator/ip_aggregator/static
+chmod -R o+rx /path_to_projectdir/ip_aggregator/static
 ```
 ```bash
-sudo chown -R www-data:www-data /your_username/IP_Aggregator/ip_aggregator/static
+sudo chown -R www-data:www-data /path_to_projectdir/ip_aggregator/static
 ```
 
 ## Usage
@@ -256,6 +241,8 @@ For local development:
 
 ```bash
 cd ip_aggregator
+```
+```bash
 python manage.py runserver
 ```
 

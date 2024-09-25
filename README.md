@@ -22,10 +22,10 @@ In order to complete this guide, you need a server running Ubuntu, along with a 
 ### 2. Install Required Packages from the Ubuntu Repositories
 
 ```bash
-apt update
+sudo apt update
 ```
 ```bash
-apt install python3-venv python3-dev nginx curl pip
+sudo apt install python3-venv python3-dev nginx curl pip
 ```
 
 ### 3. Create  Virtual Environment
@@ -74,11 +74,20 @@ python manage.py collectstatic
 ```
 
 ### 8. Test Gunicorn
-
+The last thing you need to do before leaving your virtual environment is test Gunicorn to make sure that it can serve the application. You can do this by entering the project directory and using gunicorn to load the project’s WSGI module:
 ```bash
 gunicorn --bind 0.0.0.0:8000 ip_aggregator.wsgi
 ```
-If everything is correct:
+You can go and test the app in your browser by typing `your_ip:8000`.
+
+You should receive an output like this:
+```
+[2024-09-25 03:30:34 +0000] [3266] [INFO] Starting gunicorn 23.0.0
+[2024-09-25 03:30:34 +0000] [3266] [INFO] Listening at: http://0.0.0.0:8000 (3266)
+[2024-09-25 03:30:34 +0000] [3266] [INFO] Using worker: sync
+[2024-09-25 03:30:34 +0000] [3267] [INFO] Booting worker with pid: 3267
+```
+You can back out of our virtual environment by typing:
 ```bash
 deactivate
 ```
@@ -138,23 +147,61 @@ sudo systemctl enable gunicorn.socket
 ```
 Check the status of the process to find out whether it was able to start:
 ```bash
-systemctl status gunicorn.socket
+sudo systemctl status gunicorn.socket
+```
+You should receive an output like this:
+``` bash
+Output
+● gunicorn.socket - gunicorn socket
+     Loaded: loaded (/etc/systemd/system/gunicorn.socket; enabled; vendor preset: enabled)
+     Active: active (listening) since Mon 2024-09-25 01:53:25 UTC; 5s ago
+   Triggers: ● gunicorn.service
+     Listen: /run/gunicorn.sock (Stream)
+     CGroup: /system.slice/gunicorn.socket
+
+Sep 25 01:53:25 django systemd[1]: Listening on gunicorn socket.
 ```
 ### 10.1. Testing Socket Activation
 Currently, if you’ve only started the gunicorn.socket unit, the gunicorn.service will not be active yet since the socket has not yet received any connections. You can check this by typing:
 ```bash
-systemctl status gunicorn
+sudo systemctl status gunicorn
 ```
+```
+Output
+○ gunicorn.service - gunicorn daemon
+     Loaded: loaded (/etc/systemd/system/gunicorn.service; disabled; vendor preset: enabled)
+     Active: inactive (dead)
+TriggeredBy: ● gunicorn.socket
+```
+
 To test the socket activation mechanism, you can send a connection to the socket through curl by typing:
 ```bash
 curl --unix-socket /run/gunicorn.sock localhost
 ```
 You should receive the HTML output from your application in the terminal. This indicates that Gunicorn was started and was able to serve your Django application. You can verify that the Gunicorn service is running by typing:
 ```bash
-systemctl status gunicorn
+sudo systemctl status gunicorn
+```
+```
+Output
+● gunicorn.service - gunicorn daemon
+     Loaded: loaded (/etc/systemd/system/gunicorn.service; disabled; vendor preset: enabled)
+     Active: active (running) since Mon 2024-09-25 01:54:49 UTC; 5s ago
+TriggeredBy: ● gunicorn.socket
+   Main PID: 102674 (gunicorn)
+      Tasks: 4 (limit: 4665)
+     Memory: 94.2M
+        CPU: 885ms
+     CGroup: /system.slice/gunicorn.service
+             ├─102674 /home/sammy/myprojectdir/myprojectenv/bin/python3 /home/sammy/myprojectdir/myprojectenv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock myproject.wsgi:application
+             ├─102675 /home/sammy/myprojectdir/myprojectenv/bin/python3 /home/sammy/myprojectdir/myprojectenv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock myproject.wsgi:application
+             ├─102676 /home/sammy/myprojectdir/myprojectenv/bin/python3 /home/sammy/myprojectdir/myprojectenv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock myproject.wsgi:application
+             └─102677 /home/sammy/myprojectdir/myprojectenv/bin/python3 /home/sammy/myprojectdir/myprojectenv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock myproject.wsgi:application
+
+Sep 25 01:54:49 django systemd[1]: Started gunicorn daemon.
 ```
 
-### 11. Configure Nginx
+### 11. Configure Nginx to Proxy Pass to Gunicorn
 
 Create and edit `/etc/nginx/sites-available/ip_aggregator`:
 
@@ -183,18 +230,18 @@ Notes:
 
 Enable the Nginx configuration:
 ```bash
-ln -s /etc/nginx/sites-available/ip_aggregator /etc/nginx/sites-enabled
+sudo ln -s /etc/nginx/sites-available/ip_aggregator /etc/nginx/sites-enabled
 ```
 Test your Nginx configuration for syntax errors by typing:
 ```bash
-nginx -t
+sudo nginx -t
 ```
 ```bash
-systemctl restart nginx
+sudo systemctl restart nginx
 ```
 Finally, you need to open up your firewall to normal traffic on port 80
 ```bash
-ufw allow 'Nginx Full'
+sudo ufw allow 'Nginx Full'
 ```
 
 ## Troubleshooting

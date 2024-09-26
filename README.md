@@ -33,6 +33,9 @@ sudo apt install python3-venv python3-dev nginx curl pip
 ```bash
 python3 -m venv env
 ```
+This will create a directory called env within your project directory. Inside, it will install a local version of Python and a local version of pip to manage packages. You can use this virtual environment structure to install and configure an isolated Python environment for any project that you want to create.
+
+Before installing your project’s Python requirements, you will need to activate the virtual environment. You can do that by typing:
 ```bash
 source env/bin/activate
 ```
@@ -49,11 +52,14 @@ pip install django gunicorn pillow
 git clone https://github.com/carlosj1999/ip_aggregator.git
 ```
 
+```bash
+cd ~/ip_aggregator
+```
 ### 6. Configure Django Settings
 
 Replace 'your_server_ip_or_domain' with your actual server IP or domain
 ``` bash
-vim /ip_aggregator/settings.py
+vim ip_aggregator/settings.py
 ```
 
 The simplest case: just add the domain name(s) and IP addresses of your Django server:
@@ -87,10 +93,11 @@ You should receive an output like this:
 [2024-09-25 03:30:34 +0000] [3266] [INFO] Using worker: sync
 [2024-09-25 03:30:34 +0000] [3267] [INFO] Booting worker with pid: 3267
 ```
+When you are finished testing, hit `CTRL-C` in the terminal window to stop Gunicorn.
+
 You can back out of our virtual environment by typing:
-```bash
-deactivate
-```
+
+$ `deactivate`
 
 ### 9. Create Gunicorn Systemd Socket and Service Files
 
@@ -186,19 +193,19 @@ sudo systemctl status gunicorn
 Output
 ● gunicorn.service - gunicorn daemon
      Loaded: loaded (/etc/systemd/system/gunicorn.service; disabled; vendor preset: enabled)
-     Active: active (running) since Mon 2024-09-25 01:54:49 UTC; 5s ago
+     Active: active (running) since Thu 2024-09-26 02:15:58 UTC; 1min 47s ago
 TriggeredBy: ● gunicorn.socket
-   Main PID: 102674 (gunicorn)
-      Tasks: 4 (limit: 4665)
-     Memory: 94.2M
-        CPU: 885ms
+   Main PID: 4273 (gunicorn)
+      Tasks: 4 (limit: 3394)
+     Memory: 89.6M
+        CPU: 441ms
      CGroup: /system.slice/gunicorn.service
-             ├─102674 /home/sammy/myprojectdir/myprojectenv/bin/python3 /home/sammy/myprojectdir/myprojectenv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock myproject.wsgi:application
-             ├─102675 /home/sammy/myprojectdir/myprojectenv/bin/python3 /home/sammy/myprojectdir/myprojectenv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock myproject.wsgi:application
-             ├─102676 /home/sammy/myprojectdir/myprojectenv/bin/python3 /home/sammy/myprojectdir/myprojectenv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock myproject.wsgi:application
-             └─102677 /home/sammy/myprojectdir/myprojectenv/bin/python3 /home/sammy/myprojectdir/myprojectenv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock myproject.wsgi:application
+             ├─4273 /home/carlos/env/bin/python3 /home/carlos/env/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock ip_aggregator.wsgi:application
+             ├─4274 /home/carlos/env/bin/python3 /home/carlos/env/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock ip_aggregator.wsgi:application
+             ├─4275 /home/carlos/env/bin/python3 /home/carlos/env/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock ip_aggregator.wsgi:application
+             └─4276 /home/carlos/env/bin/python3 /home/carlos/env/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock ip_aggregator.wsgi:application
 
-Sep 25 01:54:49 django systemd[1]: Started gunicorn daemon.
+Sep 26 02:15:58 ubuntu systemd[1]: Started gunicorn daemon.
 ```
 
 ### 11. Configure Nginx to Proxy Pass to Gunicorn

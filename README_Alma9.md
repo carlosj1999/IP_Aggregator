@@ -131,7 +131,7 @@ After=network.target
 
 [Service]
 User=your_username
-Group=www-data
+Group=your_username # Or a valid group like 'nginx'
 WorkingDirectory=/path_to_projectdir/ip_aggregator
 ExecStart=/path_to_projectvenv/env/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn.sock ip_aggregator.wsgi:application
 
@@ -308,9 +308,6 @@ tail -F /var/log/nginx/error.log
 ```
 ##### For (13: Permission denied), "GET /static/css/style.css HTTP/1.1":
 Ensure that Nginx and Gunicorn have the necessary permissions to access your project files. Adjust permissions cautiously:
-```bash
-chmod o+rx /your_username
-```
 ```bash
 chmod o+rx /path_to_projectdir/ip_aggregator
 ```

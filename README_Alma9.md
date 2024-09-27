@@ -227,10 +227,10 @@ TriggeredBy: ● gunicorn.socket
 
 ### 11. Configure Nginx to Proxy Pass to Gunicorn
 
-Create and edit `/etc/nginx/sites-available/ip_aggregator`:
+Create and edit `/etc/nginx/conf.d/ip_aggregator.conf`:
 
 ```bash
-cat <<EOF | sudo tee /etc/nginx/sites-available/ip_aggregator
+cat <<EOF | sudo tee /etc/nginx/conf.d/ip_aggregator.conf
 server {
     listen 80;
     server_name your_server_ip_or_domain;
@@ -256,6 +256,20 @@ Enable the Nginx configuration:
 ```bash
 sudo ln -s /etc/nginx/sites-available/ip_aggregator /etc/nginx/sites-enabled
 ```
+
+### 11.1. Proxy_params File
+You need to create or obtain the proxy_params file that Nginx uses for reverse proxy configuration.
+```bash
+sudo vim /etc/nginx/proxy_params
+```
+Then add the following typical proxy parameters for reverse proxying:
+```bash
+proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto $scheme;
+```
+### 11.2 Test Nginx
 Test your Nginx configuration for syntax errors by typing:
 ```bash
 sudo nginx -t

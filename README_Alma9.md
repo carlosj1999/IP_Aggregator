@@ -4,7 +4,7 @@ Follow these steps to deploy the IP Aggregator project on a new Alma9 server:
 
 ### 1. Prerequisites
 
-In order to complete this guide, you need a server running Alma9, along with a non-root user with sudo privileges and an active firewall.
+In order to complete this guide, you need a server running Alma9, along with a non-root user with sudo privileges.
 
 
 ### 2. Install Required Packages from the Alma9 Repositories
@@ -264,7 +264,7 @@ sudo nginx -t
 ```bash
 sudo systemctl restart nginx
 ```
-Finally, you need to open up your firewall to normal traffic on port 80
+Finally, if needed open up your firewall to normal traffic on port 80
 ```bash
 sudo firewall-cmd --permanent --zone=public --add-service=http
 ```

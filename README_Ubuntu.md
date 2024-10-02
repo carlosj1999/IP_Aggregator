@@ -4,7 +4,7 @@ Follow these steps to deploy the IP Aggregator project on a new Ubuntu server:
 
 ### 1. Prerequisites
 
-In order to complete this guide, you need a server running Ubuntu, along with a non-root user with sudo privileges and an active firewall.
+In order to complete this guide, you need a server running Ubuntu, along with a non-root user with sudo privileges.
 
 ### 2. Install Required Packages from the Ubuntu Repositories
 

@@ -233,7 +233,7 @@ sudo nginx -t
 ```bash
 sudo systemctl restart nginx
 ```
-Finally, you need to open up your firewall to normal traffic on port 80
+Finally, if needed open up your firewall to normal traffic on port 80
 ```bash
 sudo ufw allow 'Nginx Full'
 ```

@@ -131,7 +131,31 @@ Notes:
 1. Replace your_username with the actual username you’re using on the server.
 2. Make sure the paths in WorkingDirectory and ExecStart are correct according to your setup.
 
-### 10. Start and Enable Gunicorn Socket
+### 10. Allow Gunicorn Access with SELinux Policy Adjustments
+If SELinux is preventing Gunicorn from running properly, you can either modify the SELinux policy to allow Gunicorn to run.
+
+1- First, you need to check what SELinux is blocking to identify the exact issue. Use the audit logs to see what’s being denied:
+```bash
+sudo cat /var/log/audit/audit.log | grep denied
+```
+You should receive an output like this:
+
+`type=AVC msg=audit(1728362101.264:824): avc:  denied  { execute } for  pid=34342 comm="(gunicorn)" name="gunicorn" dev="dm-0" ino=34171786 scontext=system_u:system_r:init_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=1`
+
+2- Use `audit2allow` to generate a custom policy module that will allow the denied access:
+```bash
+sudo cat /var/log/audit/audit.log | grep gunicorn | audit2allow -M gunicorn_policy
+```
+3- Install the policy module you just created:
+```bash
+sudo semodule -i gunicorn_policy.pp
+```
+4- Once the module is installed:
+```bash
+systemctl daemon-reload
+```
+
+### 10.1. Start and Enable Gunicorn Socket
 
 ```bash
 sudo systemctl start gunicorn.socket
@@ -156,24 +180,6 @@ Output
 Sep 25 01:53:25 django systemd[1]: Listening on gunicorn socket.
 ```
 
-### 10.1. Allow Gunicorn Access with SELinux Policy Adjustments
-If SELinux is preventing Gunicorn from running properly, you can either modify the SELinux policy to allow Gunicorn to run.
-1- First, you need to check what SELinux is blocking to identify the exact issue. Use the audit logs to see what’s being denied:
-```bash
-sudo cat /var/log/audit/audit.log | grep denied
-```
-2- Use `audit2allow` to generate a custom policy module that will allow the denied access:
-```bash
-sudo cat /var/log/audit/audit.log | grep gunicorn | audit2allow -M gunicorn_policy
-```
-3- Install the policy module you just created:
-```bash
-sudo semodule -i gunicorn_policy.pp
-```
-4- Once the module is installed, restart Gunicorn:
-```bash
-sudo systemctl restart gunicorn
-```
 ### 10.2. Testing Socket Activation
 Currently, if you’ve only started the gunicorn.socket unit, the gunicorn.service will not be active yet since the socket has not yet received any connections. You can check this by typing:
 ```bash

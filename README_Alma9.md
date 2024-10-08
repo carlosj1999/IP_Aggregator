@@ -128,11 +128,11 @@ EOF
 ```
 
 Notes:
-1. Replace your_username with the actual username you’re using on the server.
-2. Make sure the paths in WorkingDirectory and ExecStart are correct according to your setup.
+1. Replace `your_username` with the actual username you’re using on the server.
+2. Make sure the paths in `WorkingDirectory` and `ExecStart` are correct according to your setup.
 
 ### 10. Allow Gunicorn Access with SELinux Policy Adjustments
-If SELinux is preventing Gunicorn from running properly, you can either modify the SELinux policy to allow Gunicorn to run.
+If SELinux is enabled it will prevent Gunicorn from running properly, you can modify the SELinux policy to allow Gunicorn to run.
 
 1- First, you need to check what SELinux is blocking to identify the exact issue. Use the audit logs to see what’s being denied:
 ```bash
